@@ -1,0 +1,7 @@
+version: '3.4'
+services:
+  scraper:
+    image: bytes85/php7.4-cli
+    volumes:
+      - ./:/scraper
+    entrypoint: ["php", "-d", "memory_limit=-1", "/scraper/bin/application", "app:run-scraper"]
