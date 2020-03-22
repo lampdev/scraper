@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /**
  * Application entrypoint script
@@ -6,10 +7,25 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use App\Command\ScraperCommand;
+use Symfony\Component\Console\CommandLoader\ContainerCommandLoader;
+
 
 $application = new Application();
 
-$application->add(new ScraperCommand());
+$containerBuilder = new ContainerBuilder();
+$loader           = new YamlFileLoader($containerBuilder, new FileLocator(__DIR__));
+$loader->load(__DIR__ . '/../config/services.yaml');
+
+$commandLoader = new ContainerCommandLoader(
+    $containerBuilder, [
+        'app:run-scraper' => ScraperCommand::class,
+    ]
+);
+
+$application->setCommandLoader($commandLoader);
 
 $application->run();

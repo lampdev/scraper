@@ -1,0 +1,32 @@
+# app/config/services.yaml
+
+# Some retrievable parameters
+parameters:
+  base_url: 'https://www.walmart.com'
+  all_departments_url: '/all-departments'
+
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface:
+    class: 'Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface'
+    factory: ['@service_container', 'getParameterBag' ]
+
+  App\Command\ScraperCommand:
+    class: 'App\Command\ScraperCommand'
+    arguments:
+      $parameters: '@Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface'
+      $name: 'app:run-scraper'
+
+  Monolog\Handler\StreamHandler:
+    arguments:
+      $stream: 'php://stderr'
+
+  Monolog\Logger:
+    arguments:
+      $name: 'app'
+    calls:
+      - [ pushHandler, ['@stderr.monolog.handler'] ]
