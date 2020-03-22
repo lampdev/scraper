@@ -10,6 +10,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Monolog\Logger;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class ScraperCommand extends Command {
   /**
@@ -22,11 +24,20 @@ class ScraperCommand extends Command {
    */
   private $logger;
 
-  public function __construct(ParameterBagInterface $parameters, Logger $logger, string $name = null) {
+  /**
+   * @var Client
+   */
+  private $client;
+
+  public function __construct(ParameterBagInterface $parameters,
+                              Logger $logger,
+                              Client $client,
+                              string $name = null) {
     parent::__construct($name);
 
     $this->parameters = $parameters;
     $this->logger = $logger;
+    $this->client = $client;
   }
 
   protected function configure() {
@@ -36,7 +47,16 @@ class ScraperCommand extends Command {
   }
 
   protected function execute(InputInterface $input, OutputInterface $output) {
-    $output->write('Hello ' . $this->parameters->get('base_url'));
+    try {
+      $res = $this->client->get($this->parameters->get('allDepartmentsUrl'));
+    } catch (RequestException $e) {
+      $this->logger->error($e->getMessage());
+      $this->logger->error($e->getTraceAsString());
+
+      die();
+    }
+
+    $output->write($res->getBody()->getContents());
 
     return 0;
   }

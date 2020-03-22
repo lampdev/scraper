@@ -2,8 +2,9 @@
 
 # Some retrievable parameters
 parameters:
-  base_url: 'https://www.walmart.com'
-  all_departments_url: '/all-departments'
+  baseUrl: 'https://www.walmart.com'
+  allDepartmentsUrl: '/all-departments'
+  guzzleHeadersUserAgent: 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.97 Safari/537.36'
 
 services:
   # default configuration for services in *this* file
@@ -19,14 +20,25 @@ services:
     class: 'App\Command\ScraperCommand'
     arguments:
       $parameters: '@Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface'
+      $logger: '@Monolog\Logger'
+      $client: '@GuzzleHttp\Client'
       $name: 'app:run-scraper'
 
   Monolog\Handler\StreamHandler:
+    class: 'Monolog\Handler\StreamHandler'
     arguments:
       $stream: 'php://stderr'
 
   Monolog\Logger:
+    class: 'Monolog\Logger'
     arguments:
       $name: 'app'
     calls:
-      - [ pushHandler, ['@stderr.monolog.handler'] ]
+      - [ pushHandler, ['@Monolog\Handler\StreamHandler'] ]
+
+  GuzzleHttp\Client:
+    class: 'GuzzleHttp\Client'
+    arguments:
+      - base_uri: '%baseUrl%'
+        headers:
+          User-Agent: '%guzzleHeadersUserAgent%'
