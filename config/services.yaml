@@ -21,7 +21,7 @@ services:
     arguments:
       $parameters: '@Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface'
       $logger: '@Monolog\Logger'
-      $client: '@GuzzleHttp\Client'
+      $phantomJS: '@App\Service\PhantomJS'
       $name: 'app:run-scraper'
 
   Monolog\Handler\StreamHandler:
@@ -36,9 +36,15 @@ services:
     calls:
       - [ pushHandler, ['@Monolog\Handler\StreamHandler'] ]
 
-  GuzzleHttp\Client:
-    class: 'GuzzleHttp\Client'
+  PhantomInstaller\PhantomBinary:
+    class: 'PhantomInstaller\PhantomBinary'
+
+  App\Service\PhantomJS:
+    class: 'App\Service\PhantomJS'
     arguments:
-      - base_uri: '%baseUrl%'
-        headers:
-          User-Agent: '%guzzleHeadersUserAgent%'
+      $binary: '@PhantomInstaller\PhantomBinary'
+      $crawler: '@Symfony\Component\DomCrawler\Crawler'
+      $baseUrl: '%baseUrl%'
+
+  Symfony\Component\DomCrawler\Crawler:
+    class: 'Symfony\Component\DomCrawler\Crawler'
