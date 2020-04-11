@@ -6,6 +6,7 @@ namespace App\Service;
 use PhantomInstaller\PhantomBinary;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Process\Process;
+use \Closure;
 
 class PhantomJS {
   /**
@@ -70,7 +71,63 @@ class PhantomJS {
    *
    * @return array
    */
-  public function getLinks(string $selector) : array {
+  public function getCategoryLinks(string $selector): array {
+    $this->crawler->clear();
+    $this->crawler->add($this->getPageSource());
+
+    return array_map(
+        Closure::fromCallable([$this, 'ensureRelativeLinks']),
+        $this->crawler->filter($selector)->extract(
+            [
+                'href',
+                '_text'
+            ]
+        )
+    );
+  }
+
+  /**
+   * Returns array of items for the given page
+   *
+   * @param string $selector for general item card
+   * @param array $cardSelectors for properties of an item
+   *
+   * @return array
+   */
+  public function getItems(string $selector, array $cardSelectors): array {
+    $this->crawler->clear();
+    $this->crawler->add($this->getPageSource());
+
+    return $this->crawler->filter($selector)->each(function(Crawler $node) use($cardSelectors) {
+        return $this->getItemDetails($node, $cardSelectors);
+      }
+    );
+  }
+
+  /**
+   * Returns an array for an item with all required params (title, price, ...)
+   *
+   * @param Crawler $node
+   * @param array $cardSelectors
+   *
+   * @return array
+   */
+  private function getItemDetails(Crawler $node, array $cardSelectors): array {
+    return [
+        'img' => $node->filter('img')->extract(['src']),
+        'title' => $node->filter($cardSelectors['title'])->extract(['_text']),
+        'price' => $node->filter($cardSelectors['price'])->extract(['_text']),
+        'soldBy' => $node->filter($cardSelectors['soldBy'])->extract(['_text']),
+        'rating' => $node->filter($cardSelectors['rating'])->extract(['_text']),
+    ];
+  }
+
+  /**
+   * Returns processed page source
+   *
+   * @return string
+   */
+  private function getPageSource(): string {
     $process = new Process(
         [
             $this->binary::getBin(),
@@ -81,9 +138,25 @@ class PhantomJS {
 
     $process->mustRun();
 
-    $this->crawler->add($process->getOutput());
+    return $process->getOutput();
+  }
 
+  /**
+   * Closure to convert all links to absolute
+   *
+   * @param array $element
+   *
+   * @return array
+   */
+  private function ensureRelativeLinks(array $element): array {
+    list($url, $name) = $element;
+    if (strpos($url, 'http') === 0) {
+      $url = parse_url($url)['path'];
+    }
 
-    return $this->crawler->filter($selector)->extract(['href', '_text']);
+    return [
+        $url,
+        $name
+    ];
   }
 }

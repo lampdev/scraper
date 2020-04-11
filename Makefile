@@ -1,2 +1,6 @@
-xdebug-run:
-	docker run -it --rm -v ${PWD}:/scraper -v ${PWD}/docker/configs/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini bytes85/php7.4-cli php -d memory_limit=-1 /scraper/bin/application app:run-scraper
+build:
+	git clean -fxd
+	docker-compose run --rm composer
+
+run:
+	docker-compose run --rm scraper

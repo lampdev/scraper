@@ -4,8 +4,10 @@ var page = require('webpage').create();
 var url = system.args[1];
 // render the page, and run the callback function
 page.open(url, function () {
-  // page.content is the source
-  console.log(page.content);
-  // need to call phantom.exit() to prevent from hanging
-  phantom.exit();
+  setTimeout(function () {
+    // page.content is the source
+    console.log(page.content);
+    // need to call phantom.exit() to prevent from hanging
+    phantom.exit();
+  }, 500);
 });

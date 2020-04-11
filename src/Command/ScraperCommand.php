@@ -47,9 +47,42 @@ class ScraperCommand extends Command {
 
   protected function execute(InputInterface $input, OutputInterface $output) {
 
-    $this->phantomJS->setUrl($this->parameters->get('allDepartmentsUrl'));
-    $departments = $this->phantomJS->getLinks('div.alldeps-DepartmentLinks-columnList a.alldeps-DepartmentLinks-categoryList-categoryLink');
+    $this->phantomJS->setUrl($this->parameters->get('allCategories')['url']);
+    $categories = $this->phantomJS->getCategoryLinks($this->parameters->get('allCategories')['linksSelector']);
+
+    foreach ($categories as $category) {
+      list($categoryUrl, $categoryName) = $category;
+
+      $page = 1;
+      $allItems = $uniqueness = [];
+
+      do {
+        $output->writeln('Category name: ' . $categoryName . '; Category URL: ' . $categoryUrl . '; page: ' . $page);
+
+        $this->phantomJS->setUrl($categoryUrl . '?page=' . $page);
+        $items = $this->phantomJS->getItems(
+            $this->parameters->get('items')['linksSelector'],
+            $this->parameters->get('items')['card']
+        );
+
+        $key = md5(json_encode($items));
+        if (in_array($key, $uniqueness)) {
+          break;
+        }
+        $uniqueness[] = $key;
+
+        $allItems = array_merge($items,$allItems);
+
+        $output->writeln('Found ' . count($items) . ' products');
+        $page++;
+
+      } while(count($items));
+
+      var_dump($allItems);die();
+    }
 
     return 0;
   }
+
+
 }
