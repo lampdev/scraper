@@ -2,6 +2,10 @@ version: '3.4'
 
 x-environment-variables: &environment-variables
   - OPENSSL_CONF=/scraper/config/openssl.cnf
+  - MYSQL_DATABASE=walmart
+  - MYSQL_USER=root
+  - MYSQL_PASSWORD=password
+  - MYSQL_ROOT_PASSWORD=password
 
 services:
   scraper:
@@ -11,6 +15,12 @@ services:
       - ./docker/configs/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment: *environment-variables
     entrypoint: ["php", "-d", "memory_limit=-1", "/scraper/bin/application", "app:run-scraper"]
+    depends_on:
+      - db
+    networks:
+      main:
+        aliases:
+          - scraper
   composer:
     image: bytes85/php7.4-cli
     volumes:
@@ -23,3 +33,17 @@ services:
       - ./:/scraper
     environment: *environment-variables
     entrypoint: ["/bin/bash"]
+  db:
+    image: bytes85/mysql
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+      - "4040:4040"
+    environment: *environment-variables
+    networks:
+      main:
+        aliases:
+          - db
+networks:
+  main:

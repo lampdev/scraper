@@ -11,6 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Monolog\Logger;
 use App\Service\PhantomJS;
+use Doctrine\DBAL\Connection;
 
 class ScraperCommand extends Command {
   /**
@@ -28,15 +29,22 @@ class ScraperCommand extends Command {
    */
   private PhantomJS $phantomJS;
 
+  /**
+   * @var Connection
+   */
+  private $connection;
+
   public function __construct(ParameterBagInterface $parameters,
                               Logger $logger,
                               PhantomJS $phantomJS,
+                              Connection $connection,
                               string $name = null) {
     parent::__construct($name);
 
     $this->parameters = $parameters;
     $this->logger = $logger;
     $this->phantomJS = $phantomJS;
+    $this->connection = $connection;
   }
 
   protected function configure() {
@@ -78,7 +86,26 @@ class ScraperCommand extends Command {
 
       } while(count($items));
 
-      var_dump($allItems);die();
+      foreach ($allItems as $item) {
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $queryBuilder
+            ->insert('products')
+            ->values(
+                [
+                    'title'  => ':title',
+                    'price'  => ':price',
+                    'soldBy' => ':soldBy',
+                    'rating' => ':rating'
+                ]
+            )
+            ->setParameter(':title', $item['title'][0])
+            ->setParameter(':price', $item['price'][0])
+            ->setParameter(':soldBy', $item['soldBy'][0])
+            ->setParameter(':rating', $item['rating'][0])
+        ;
+
+        $queryBuilder->execute();
+      }
     }
 
     return 0;

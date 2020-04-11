@@ -30,6 +30,7 @@ services:
       $parameters: '@Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface'
       $logger: '@Monolog\Logger'
       $phantomJS: '@App\Service\PhantomJS'
+      $connection: '@Doctrine\DBAL\Connection'
       $name: 'app:run-scraper'
 
   Monolog\Handler\StreamHandler:
@@ -56,3 +57,13 @@ services:
 
   Symfony\Component\DomCrawler\Crawler:
     class: 'Symfony\Component\DomCrawler\Crawler'
+
+  Doctrine\DBAL\Connection:
+    factory: ['Doctrine\DBAL\DriverManager', 'getConnection']
+    arguments:
+      -
+        dbname: walmart
+        user: root
+        password: password
+        host: db
+        driver: pdo_mysql
