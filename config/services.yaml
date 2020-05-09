@@ -30,7 +30,7 @@ services:
       $parameters: '@Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface'
       $logger: '@Monolog\Logger'
       $phantomJS: '@App\Service\PhantomJS'
-      $connection: '@Doctrine\DBAL\Connection'
+      $em: '@Doctrine\ORM\EntityManagerInterface'
       $name: 'app:run-scraper'
 
   Monolog\Handler\StreamHandler:
@@ -67,3 +67,25 @@ services:
         password: password
         host: db
         driver: pdo_mysql
+
+  Doctrine\ORM\Mapping\Driver\AnnotationDriver:
+    factory: ['Doctrine\ORM\Configuration', 'newDefaultAnnotationDriver']
+    arguments:
+      - [ '/../src' ]
+      - false
+
+  Doctrine\ORM\Configuration:
+    class: Doctrine\ORM\Configuration
+    calls:
+      - setProxyDir:
+        - 'Proxies'
+      - setProxyNamespace:
+        - 'App\\Proxies'
+      - setMetadataDriverImpl:
+        - '@Doctrine\ORM\Mapping\Driver\AnnotationDriver'
+
+  Doctrine\ORM\EntityManagerInterface:
+    factory: ['Doctrine\ORM\EntityManager', 'create']
+    arguments:
+      - '@Doctrine\DBAL\Connection'
+      - '@Doctrine\ORM\Configuration'

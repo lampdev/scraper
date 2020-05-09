@@ -14,25 +14,25 @@ services:
       - ./:/scraper
       - ./docker/configs/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment: *environment-variables
-    entrypoint: ["php", "-d", "memory_limit=-1", "/scraper/bin/application", "app:run-scraper"]
+    #entrypoint: ["php", "-d", "memory_limit=-1", "/scraper/bin/application", "app:run-scraper"]
     depends_on:
       - db
     networks:
       main:
         aliases:
           - scraper
-  composer:
+  console:
     image: bytes85/php7.4-cli
     volumes:
       - ./:/scraper
     environment: *environment-variables
-    entrypoint: ["composer", "update", "-d", "/scraper"]
-  bash:
-    image: bytes85/php7.4-cli
-    volumes:
-      - ./:/scraper
-    environment: *environment-variables
-    entrypoint: ["/bin/bash"]
+    entrypoint: ['sleep', 'infinity']
+    depends_on:
+      - db
+    networks:
+      main:
+        aliases:
+          - scraper
   db:
     image: bytes85/mysql
     volumes:

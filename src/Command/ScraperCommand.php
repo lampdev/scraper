@@ -11,7 +11,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Monolog\Logger;
 use App\Service\PhantomJS;
-use Doctrine\DBAL\Connection;
+use App\Entity\Manufacturer;
+use App\Entity\Category;
+use App\Entity\Product;
+use Doctrine\ORM\EntityManagerInterface;
 
 class ScraperCommand extends Command {
   /**
@@ -30,21 +33,21 @@ class ScraperCommand extends Command {
   private PhantomJS $phantomJS;
 
   /**
-   * @var Connection
+   * @var EntityManagerInterface
    */
-  private $connection;
+  private $em;
 
   public function __construct(ParameterBagInterface $parameters,
                               Logger $logger,
                               PhantomJS $phantomJS,
-                              Connection $connection,
+                              EntityManagerInterface $em,
                               string $name = null) {
     parent::__construct($name);
 
     $this->parameters = $parameters;
     $this->logger = $logger;
     $this->phantomJS = $phantomJS;
-    $this->connection = $connection;
+    $this->em = $em;
   }
 
   protected function configure() {
@@ -60,6 +63,21 @@ class ScraperCommand extends Command {
 
     foreach ($categories as $category) {
       list($categoryUrl, $categoryName) = $category;
+
+      if (!empty($categoryName)) {
+        $category = $this->em->getRepository('App\Entity\Category')->findOneBy(
+            [
+                'name' => $categoryName
+            ]
+        );
+        if (!$category) {
+          $category = new Category();
+          $category->setName($categoryName);
+
+          $this->em->persist($category);
+          $this->em->flush();
+        }
+      }
 
       $page = 1;
       $allItems = $uniqueness = [];
@@ -87,7 +105,45 @@ class ScraperCommand extends Command {
       } while(count($items));
 
       foreach ($allItems as $item) {
-        $queryBuilder = $this->connection->createQueryBuilder();
+        if (!empty($item['soldBy'][0])) {
+          $manufacturer = $this->em->getRepository('App\Entity\Manufacturer')->findOneBy(
+              [
+                  'name' => $item['soldBy'][0]
+              ]
+          );
+          if (!$manufacturer) {
+            $manufacturer = new Manufacturer();
+            $manufacturer->setName($item['soldBy'][0]);
+
+            $this->em->persist($manufacturer);
+            $this->em->flush();
+          }
+        }
+
+        if (!empty($item['title'][0])) {
+          $product = $this->em->getRepository('App\Entity\Product')->findOneBy(
+              [
+                  'title' => $item['title'][0],
+                  'manufacturer' => $manufacturer ?? null
+              ]
+          );
+
+          if (!$product) {
+            $product = new Product();
+
+            $product->setTitle($item['title'][0]);
+            $product->setPrice($item['price'][0]);
+            $product->setManufacturer($manufacturer ?? null);
+            $product->setCategory($category ?? null);
+            $product->setRating($item['rating'][0]);
+
+            $this->em->persist($product);
+            $this->em->flush();
+          }
+        }
+
+
+        /*$queryBuilder = $this->connection->createQueryBuilder();
         $queryBuilder
             ->insert('products')
             ->values(
@@ -104,7 +160,8 @@ class ScraperCommand extends Command {
             ->setParameter(':rating', $item['rating'][0])
         ;
 
-        $queryBuilder->execute();
+        $queryBuilder->execute();*/
+
       }
     }
 
