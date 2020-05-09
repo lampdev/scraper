@@ -141,27 +141,6 @@ class ScraperCommand extends Command {
             $this->em->flush();
           }
         }
-
-
-        /*$queryBuilder = $this->connection->createQueryBuilder();
-        $queryBuilder
-            ->insert('products')
-            ->values(
-                [
-                    'title'  => ':title',
-                    'price'  => ':price',
-                    'soldBy' => ':soldBy',
-                    'rating' => ':rating'
-                ]
-            )
-            ->setParameter(':title', $item['title'][0])
-            ->setParameter(':price', $item['price'][0])
-            ->setParameter(':soldBy', $item['soldBy'][0])
-            ->setParameter(':rating', $item['rating'][0])
-        ;
-
-        $queryBuilder->execute();*/
-
       }
     }
 
