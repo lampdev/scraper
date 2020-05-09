@@ -14,7 +14,7 @@ services:
       - ./:/scraper
       - ./docker/configs/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     environment: *environment-variables
-    #entrypoint: ["php", "-d", "memory_limit=-1", "/scraper/bin/application", "app:run-scraper"]
+    entrypoint: ["php", "-d", "memory_limit=-1", "/scraper/bin/application", "app:run-scraper"]
     depends_on:
       - db
     networks:
